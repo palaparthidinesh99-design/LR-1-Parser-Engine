@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LR(1) Parser Engine</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --panel-bg: rgba(30, 41, 59, 0.7);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --text-color: #f8fafc;
+            --accent: #3b82f6;
+            --accent-hover: #60a5fa;
+            --font-mono: 'Consolas', 'Courier New', monospace;
+        }
+
+        body {
+            background: linear-gradient(135deg, #020617, #0f172a);
+            color: var(--text-color);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 10px 20px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        h1 {
+            text-align: center;
+            font-weight: 800;
+            background: linear-gradient(to right, #60a5fa, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 0 0 10px 0;
+            font-size: 1.8rem;
+            letter-spacing: -0.5px;
+        }
+
+        .container {
+            display: flex;
+            gap: 20px;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .left-panel {
+            flex: 0 0 320px;
+        }
+
+        .right-panel {
+            flex: 1;
+            overflow: hidden;
+        }
+
+        textarea {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-color);
+            color: #e2e8f0;
+            font-family: var(--font-mono);
+            padding: 15px;
+            border-radius: 8px;
+            flex: 1;
+            resize: none;
+            outline: none;
+            transition: border-color 0.3s;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        textarea:focus {
+            border-color: var(--accent);
+        }
+
+        button {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3);
+        }
+
+        button:hover {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+            overflow-x: auto;
+            flex-wrap: nowrap;
+        }
+
+        .tabs::-webkit-scrollbar { height: 4px; }
+
+        .tab {
+            padding: 8px 12px;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+            font-weight: 500;
+            color: #94a3b8;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .tab:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+        }
+
+        .tab.active {
+            background: rgba(59, 130, 246, 0.2);
+            color: var(--accent-hover);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .tab-content {
+            display: none;
+            flex: 1;
+            overflow-y: auto;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            white-space: pre-wrap;
+            line-height: 1.6;
+            color: #cbd5e1;
+            padding-right: 10px;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease forwards;
+        }
+
+        /* --- STYLED TABLES --- */
+        .table-container {
+            width: 100%;
+            overflow: auto; /* Handle both X and Y scrolling */
+            max-height: 70vh; /* Keep the table within view for sticky headers to work */
+            margin-top: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: rgba(15, 23, 42, 0.3);
+        }
+
+        th, td {
+            padding: 12px 20px;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+            border-right: 1px solid var(--border-color);
+            word-break: break-word; /* Allow breaking of long words */
+            white-space: pre-wrap;  /* Allow natural wrapping with preserved whitespace */
+            max-width: 400px;       /* Limit width to trigger the wrap */
+        }
+
+        /* Center the table without clipping the left column */
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: auto;
+            min-width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            background: rgba(15, 23, 42, 0.3);
+            margin: 0 auto; /* This centers the table safely */
+            table-layout: auto;
+        }
+
+        /* Sticky functionality for fixed navigation */
+        th {
+            background: #1e293b !important;
+            color: #fff;
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            font-size: 11px;
+            border-bottom: 2px solid var(--accent) !important;
+        }
+
+        /* Sticky State/Stack column (First column) */
+        td:first-child, th:first-child {
+            position: sticky;
+            left: 0;
+            background: #1e293b !important;
+            z-index: 25;
+            font-weight: 700;
+            border-right: 2px solid var(--accent) !important;
+        }
+
+        /* Top-Left Corner Piece (Highest priority) */
+        th:first-child {
+            z-index: 30;
+        }
+
+        /* Specific override for Action/Goto behavior */
+        #tab-tables td, #tab-tables th {
+            white-space: nowrap !important;
+            max-width: none !important;
+        }
+
+        /* Simulation trace formatting */
+        #tab-sim td, #tab-sim th {
+            max-width: none;
+            overflow: visible;
+        }
+
+        /* --- DFA STATE CARDS --- */
+        .state-cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+            padding: 10px 0;
+        }
+
+        .state-card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.2s, background 0.2s;
+        }
+
+        .state-card:hover {
+            background: rgba(30, 41, 59, 0.8);
+            transform: translateY(-3px);
+        }
+
+        .state-header {
+            color: var(--accent-hover);
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .item-list {
+            font-size: 12px;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .transition-list {
+            border-top: 1px solid var(--border-color);
+            padding-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .tag {
+            background: rgba(59, 130, 246, 0.15);
+            color: #93c5fd;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        /* --- CODE VIEW --- */
+        .code-view {
+            background: #020617;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            color: #94a3b8;
+            font-size: 12px;
+            margin-top: 10px;
+            height: 100%;
+            box-sizing: border-box;
+            overflow: auto;
+        }
+
+        .conflict-text {
+            color: #fb923c;
+            border-left: 3px solid #fb923c;
+            padding: 10px;
+            margin: 10px 0;
+            background: rgba(251, 146, 60, 0.1);
+            border-radius: 0 4px 4px 0;
+        }
+
+        .act-shift { color: #60a5fa; font-weight: bold; }
+        .act-reduce { color: #a855f7; font-weight: bold; }
+        .act-acc { color: #34d399; font-weight: bold; }
+
+        .divider-col {
+            background: rgba(255, 255, 255, 0.05);
+            border-right: 2px solid var(--accent) !important;
+            min-width: 20px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: var(--accent);
+            font-weight: bold;
+            margin-top: 10px;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1> LR(1) Grammar Engine</h1>
+
+    <div class="container">
+        <div class="panel left-panel">
+            <h3 style="margin-top:0; font-size:16px;">Grammar Config</h3>
+            <textarea id="grammarInput" spellcheck="false">{{ grammar }}</textarea>
+            
+            <h3 style="margin-top:20px; font-size:16px;">Test Parse String</h3>
+            <textarea id="parseInput" style="height: 100px; min-height: 100px;">{{ initial_input }}</textarea>
+
+            <button id="runBtn" onclick="runParser()">Parse</button>
+            <div id="loading" class="loading">Processing Pipeline...</div>
+        </div>
+
+        <div class="panel right-panel">
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('tab-summary')">Summary & Sets</div>
+                <div class="tab" onclick="switchTab('tab-input-grammar')">Input Grammar</div>
+                <div class="tab" onclick="switchTab('tab-input-test')">Test Input</div>
+                <div class="tab" onclick="switchTab('tab-rules')">Rules</div>
+                <div class="tab" onclick="switchTab('tab-dfa')">Items and Transitions</div>
+                <div class="tab" onclick="switchTab('tab-tables')">Action/Goto</div>
+                <div class="tab" onclick="switchTab('tab-sim')">Stack Trace</div>
+                <div class="tab" onclick="switchTab('tab-tree')">Derivation Tree</div>
+            </div>
+
+            <div id="tab-summary" class="tab-content active">Pending execution...</div>
+            <div id="tab-input-grammar" class="tab-content"><div class="code-view" id="view-grammar"></div></div>
+            <div id="tab-input-test" class="tab-content"><div class="code-view" id="view-input"></div></div>
+            <div id="tab-rules" class="tab-content">Pending execution...</div>
+            <div id="tab-dfa" class="tab-content">Pending execution...</div>
+            <div id="tab-tables" class="tab-content">Pending execution...</div>
+            <div id="tab-sim" class="tab-content">Pending execution...</div>
+            <div id="tab-tree" class="tab-content" style="text-align: center; overflow: auto;">Pending execution...</div>
+        </div>
+    </div>
+
+    <!-- Inject Mermaid -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: false, theme: 'dark' });
+        window.mermaid = mermaid;
+    </script>
+
+    <script>
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            
+            if (event && event.target) {
+                event.target.classList.add('active');
+            } else {
+                let targetTab = document.querySelector(`[onclick="switchTab('${tabId}')"]`);
+                if(targetTab) targetTab.classList.add('active');
+            }
+            
+            const targetEl = document.getElementById(tabId);
+            targetEl.classList.add('active');
+
+            // Trigger Mermaid render if switching to tree tab
+            if (tabId === 'tab-tree' && window.lastTreeCode) {
+                const treeDiv = document.getElementById('tab-tree');
+                treeDiv.innerHTML = `<pre class="mermaid">${window.lastTreeCode}</pre>`;
+                if (window.mermaid) {
+                    window.mermaid.run({ nodes: treeDiv.querySelectorAll('.mermaid') });
+                }
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatTable(raw, isAction=false) {
+            if (!raw) return 'N/A';
+            let lines = raw.trim().split('\n');
+            let html = '<div class="table-container"><table>';
+            lines.forEach((line, index) => {
+                if (line.includes('----')) return;
+                
+                // Use ||| as a special divider for Action/Goto
+                let segments = line.split('|||');
+                let leftCols = segments[0].split('\t');
+                
+                html += '<tr>';
+                
+                // Left Segment (State + Action)
+                leftCols.forEach((col, cIdx) => {
+                    let text = col.trim();
+                    let escapedText = escapeHtml(text);
+                    let isDivider = (cIdx === leftCols.length - 1 && segments.length > 1);
+                    let className = isDivider ? 'divider-col ' : '';
+                    
+                    if (index === 0) {
+                        html += `<th class="${className}">${escapedText}</th>`;
+                    } else {
+                        if (isAction) {
+                            if (text.startsWith('S') || text.startsWith('shift')) className += 'act-shift';
+                            else if (text.startsWith('R') || text.startsWith('reduce')) className += 'act-reduce';
+                            else if (text.startsWith('ACC') || text.startsWith('accept')) className += 'act-acc';
+                        }
+                        html += `<td class="${className}">${escapedText}</td>`;
+                    }
+                });
+                
+                // Right Segment (Goto)
+                // We slice(1) because the C++ output starts with a leading \t in the GOTO section
+                let rightCols = segments.length > 1 ? segments[1].split('\t').slice(1) : [];
+                
+                rightCols.forEach(col => {
+                    let text = col.trim();
+                    let escapedText = escapeHtml(text);
+                    if (index === 0) {
+                        html += `<th>${escapedText}</th>`;
+                    } else {
+                        html += `<td>${escapedText}</td>`;
+                    }
+                });
+                
+                html += '</tr>';
+            });
+            html += '</table></div>';
+            return html;
+        }
+
+        function formatDFA(raw) {
+            if (!raw) return 'N/A';
+            const states = raw.split(/^I(\d+):/m);
+            let html = '<div class="state-cards-container">';
+            
+            for(let i = 1; i < states.length; i += 2) {
+                let stateNum = states[i];
+                let content = states[i+1].trim();
+                let lines = content.split('\n');
+                
+                let items = [];
+                let transitions = [];
+                
+                lines.forEach(l => {
+                    let text = l.trim();
+                    if(text.startsWith('goto')) transitions.push(text);
+                    else if(text && text !== '(No transitions)') items.push(text);
+                });
+
+                html += `
+                <div class="state-card">
+                    <div class="state-header">State I${stateNum} <span class="tag">#${stateNum}</span></div>
+                    <div class="item-list">
+                        ${items.map(item => `<div>${escapeHtml(item)}</div>`).join('')}
+                    </div>
+                    <div class="transition-list">
+                        ${transitions.length > 0 ? 
+                            transitions.map(tr => `<span class="tag">${escapeHtml(tr)}</span>`).join('') : 
+                            '<span style="color: #64748b; font-size: 11px;">(Terminal State)</span>'}
+                    </div>
+                </div>`;
+            }
+            html += '</div>';
+            return html;
+        }
+
+        async function runParser() {
+            const btn = document.getElementById('runBtn');
+            const loading = document.getElementById('loading');
+            
+            btn.style.display = 'none';
+            loading.style.display = 'block';
+
+            const grammarText = document.getElementById('grammarInput').value;
+            const parseString = document.getElementById('parseInput').value;
+
+            // Update Snapshots
+            document.getElementById('view-grammar').innerText = grammarText;
+            document.getElementById('view-input').innerText = parseString;
+
+            try {
+                const response = await fetch('/run', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ grammar: grammarText, input_string: parseString })
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    document.getElementById('tab-summary').innerText = data.error;
+                    // Switch to summary tab automatically on error
+                    switchTab('tab-summary');
+                } else {
+                    let summaryHtml = data.sections['summary'] || '';
+                    summaryHtml = summaryHtml.replace(/(Conflict.*?precedence!)/g, '<div class="conflict-text">$1</div>');
+                    
+                    document.getElementById('tab-summary').innerHTML = '<h3>Sets & Diagnostics</h3>' + summaryHtml;
+                    document.getElementById('tab-rules').innerHTML = '<h3>Numbered Rules</h3>' + data.sections['NUMBERED PRODUCTION RULES'].split('\n').map(r => `<div>${escapeHtml(r)}</div>`).join('');
+                    
+                    document.getElementById('tab-dfa').innerHTML = formatDFA(data.sections['DFA ITEMS AND TRANSITIONS']);
+                    document.getElementById('tab-tables').innerHTML = formatTable(data.sections['ACTION AND GOTO TABLES'], true);
+                    document.getElementById('tab-sim').innerHTML = formatTable(data.sections['PARSER SIMULATION'], true);
+                    
+                    if (data.sections['DERIVATION TREE']) {
+                        window.lastTreeCode = data.sections['DERIVATION TREE'];
+                        let treeDiv = document.getElementById('tab-tree');
+                        treeDiv.innerHTML = `<pre class="mermaid">${window.lastTreeCode}</pre>`;
+                        
+                        // If we are ALREADY on the tree tab, run mermaid now
+                        if (document.getElementById('tab-tree').classList.contains('active')) {
+                            if (window.mermaid) {
+                                await window.mermaid.run({ nodes: treeDiv.querySelectorAll('.mermaid') });
+                            }
+                        }
+                    } else {
+                        window.lastTreeCode = null;
+                        document.getElementById('tab-tree').innerText = 'N/A';
+                    }
+                }
+            } catch(e) {
+                document.getElementById('tab-summary').innerText = 'Server error: ' + e.message;
+            } finally {
+                btn.style.display = 'block';
+                loading.style.display = 'none';
+            }
+        }
+    </script>
+
+</body>
+</html>

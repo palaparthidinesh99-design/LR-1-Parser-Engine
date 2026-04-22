@@ -1,0 +1,19 @@
+# Compiled Binaries
+*.exe
+*.o
+*.obj
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# Data files (optional, but keep them if you want your grammar shared)
+# data/*.txt
+
+# IDEs
+.vscode/
+.idea/
+.gemini/

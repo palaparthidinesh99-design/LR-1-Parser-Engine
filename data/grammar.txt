@@ -1,0 +1,67 @@
+TERMINALS
+id num = + - * / ( ) { } ; if else while < > == != && || $
+
+NON_TERMINALS
+S Program StmtList Stmt Block Assign IfStmt WhileStmt E T F B Rel
+
+START
+S
+
+PRECEDENCE
+|| 1 left
+&& 2 left
+== 3 left
+!= 3 left
+< 4 left
+> 4 left
++ 5 left
+- 5 left
+* 6 left
+/ 6 left
+END
+
+RULES
+S -> Program
+
+Program -> StmtList
+
+StmtList -> StmtList Stmt
+StmtList -> Stmt
+
+Stmt -> Assign
+Stmt -> IfStmt
+Stmt -> WhileStmt
+Stmt -> Block
+Stmt -> E ;
+
+Block -> { StmtList }
+
+Assign -> id = E ;
+
+IfStmt -> if ( B ) Stmt
+IfStmt -> if ( B ) Stmt else Stmt
+
+WhileStmt -> while ( B ) Stmt
+
+E -> E + T
+E -> E - T
+E -> T
+
+T -> T * F
+T -> T / F
+T -> F
+
+F -> ( E )
+F -> id
+F -> num
+
+B -> B || Rel
+B -> B && Rel
+B -> Rel
+
+Rel -> E < E
+Rel -> E > E
+Rel -> E == E
+Rel -> E != E
+Rel -> ( B )
+END

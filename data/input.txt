@@ -1,0 +1,24 @@
+id = num + id * num ; 
+id = ( id + num ) * num ;
+
+if ( id < num ) { 
+id = id + num ; 
+while ( id != num ) { 
+id = id * num ; 
+id = id - num ; 
+} 
+} else { 
+id = num ; 
+}
+
+while ( id > num ) { 
+id = id / num ; 
+if ( id == num ) { 
+id = id + num ; 
+} else { 
+id = id - num ; 
+} 
+}
+
+id = id + num * ( id + num ) ;
+$
