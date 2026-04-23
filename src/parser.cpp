@@ -185,6 +185,7 @@ void Parser::print_automaton_and_tables() {
                 has_trans = true;
             }
         }
+
         for (const string& nt : gm->non_terminals) {
             if (goto_table.count({i, nt})) {
                 cout << "  goto(" << nt << ") -> I" << goto_table[{i, nt}] << endl;
@@ -200,6 +201,7 @@ void Parser::print_automaton_and_tables() {
     for (const string& t : gm->terminals) {
         if (t != "$") header_terms.push_back(t);
     }
+    
     header_terms.push_back("$");
     
     vector<string> header_non_terms;
@@ -263,6 +265,7 @@ void print_mermaid_tree(TreeNode* root) {
     dfs_mermaid(root, nodes);
     
     // We don't need 'leaves' constraint, just define styles
+    // Define styles
     for(TreeNode* n : nodes) {
         if (n->children.empty()) {
             cout << "  " << n->id << "[\"" << n->label << "\"]:::terminal" << endl;
@@ -270,9 +273,21 @@ void print_mermaid_tree(TreeNode* root) {
             cout << "  " << n->id << "[\"" << n->label << "\"]:::nonterm" << endl;
         }
     }
+    
+    // Define edges
     for(TreeNode* n : nodes) {
         for(TreeNode* c : n->children) {
             cout << "  " << n->id << " --> " << c->id << endl;
+        }
+    }
+
+    // Force horizontal alignment of leaves (input line)
+    cout << "\n  %% Invisible Sink to align leaves" << endl;
+    cout << "  SINK[ ]:::hidden" << endl;
+    cout << "  classDef hidden fill:none,stroke:none,color:none,font-size:0px;" << endl;
+    for(TreeNode* n : nodes) {
+        if (n->children.empty()) {
+            cout << "  " << n->id << " ~~~ SINK" << endl;
         }
     }
 }
@@ -295,7 +310,6 @@ void Parser::parse_input(vector<string> input) {
     while (true) {
         int state = stack_states.back();
         string sym = input[cursor];
-        
         string stack_str = to_string(stack_states[0]);
         for (size_t i = 1; i < stack_states.size(); ++i) {
             stack_str += " " + stack_symbols[i-1] + " " + to_string(stack_states[i]);

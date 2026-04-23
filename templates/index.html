@@ -64,7 +64,9 @@
 
         .right-panel {
             flex: 1;
-            overflow: hidden;
+            overflow-x: hidden; /* Lock horizontal width */
+            overflow-y: hidden;
+            min-width: 0; /* Allow flex shrinking */
         }
 
         textarea {
@@ -159,11 +161,10 @@
             animation: fadeIn 0.3s ease forwards;
         }
 
-        /* --- STYLED TABLES --- */
         .table-container {
             width: 100%;
-            overflow: auto; /* Handle both X and Y scrolling */
-            max-height: 70vh; /* Keep the table within view for sticky headers to work */
+            height: calc(100vh - 280px); /* Fill the remaining space */
+            overflow: auto; /* Handle both X and Y scrolling properly */
             margin-top: 10px;
             border-radius: 8px;
             border: 1px solid var(--border-color);
