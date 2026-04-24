@@ -1,63 +1,83 @@
-# Final Project Report: LR(1) Parser Engine & Visualization Dashboard
+# Comprehensive Technical Report: LR(1) Parser Implementation
 
-## 1. Project Abstract
-The **LR(1) Parser Engine** is a comprehensive software tool designed to facilitate the study and practical application of compiler design principles. It implements a robust Bottom-Up parsing algorithm (LR(1)/SLR) with a modern web-based interface for real-time visualization of DFA states, parsing tables, and derivation trees.
-
----
-
-## 2. Objectives
-*   **Algorithmic Implementation:** To develop a C++ engine capable of computing FIRST/FOLLOW sets and constructing Canonical Collections of Items.
-*   **Table Generation:** To automate the creation of ACTION and GOTO tables with built-in conflict resolution.
-*   **Visual Debugging:** To provide an interactive dashboard that translates complex data structures into human-readable diagrams and tables.
-*   **User Flexibility:** To allow users to define custom grammars with complex precedence and associativity rules.
+## 1. Introduction
+This report provides a detailed technical analysis of the **LR(1) Parser Engine**. Unlike basic parsers, this implementation handles complex Context-Free Grammars (CFGs) by utilizing a Bottom-Up approach, constructing a Deterministic Finite Automaton (DFA) to guide the parsing process through Shift and Reduce operations.
 
 ---
 
-## 3. Technical Architecture
+## 2. Core Mathematical Foundations
 
-### 3.1 Backend Engine (C++)
-The core logic is written in C++ for maximum efficiency and algorithmic transparency.
-*   **GrammarManager:** Handles rule tokenization and set calculations.
-*   **Parser Class:** Manages the DFA (Deterministic Finite Automaton) state transitions and table populating.
-*   **Tree Builder:** Constructs an Abstract Syntax Tree (AST) using a bottom-up approach during input reduction.
+### 2.1 Grammar Augmentation
+To ensure a unique "Accept" state, the engine automatically augments the user-provided grammar. If the start symbol is `S`, a new rule `S' -> S` is added. This allows the parser to terminate gracefully when the entire input is reduced to the single start symbol.
 
-### 3.2 Middleware (Python/Flask)
-The Flask server acts as a bridge, handling the compilation of the C++ source and managing the data flow between the engine and the UI. It ensures that the engine is always synchronized with the user's latest grammar modifications.
+### 2.2 The Closure Operation
+The `closure(I)` function is the most critical part of the engine. For every item `[A -> α . B β]` in a set `I`, the engine adds all productions of `B` with the dot at the beginning: `[B -> . γ]`. This process repeats until no more items can be added, representing all possible rules that could be matched from the current position.
 
-### 3.3 Frontend Dashboard (HTML/JS/CSS)
-*   **Glassmorphism UI:** A sleek, modern interface utilizing translucent panels and high-contrast typography.
-*   **Mermaid.js:** An integration that renders post-fix tree data into interactive SVG diagrams.
-*   **Responsive Tables:** Implemented custom horizontal and vertical sticky behaviors to handle large-scale grammars (up to 200+ states).
+### 2.3 The Goto Operation
+The `goto(I, X)` function calculates the transition from state `I` on symbol `X`. It takes all items in `I` where the dot is before `X` (`[A -> α . X β]`), moves the dot past `X` (`[A -> α X . β]`), and then calculates the closure of that new set.
 
 ---
 
-## 4. Key Features & Innovations
+## 3. The Parsing Table Construction
 
-### 4.1 Advanced Conflict Resolution
-The system supports a `PRECEDENCE` section in the grammar file. This allows it to resolve Shift/Reduce conflicts automatically—a feature typically found in production-grade tools like Yacc or Bison.
+### 3.1 ACTION Table Rules
+*   **Shift (s_n):** If `[A -> α . a β]` is in state `i` and `goto(i, a) = j`, then `ACTION[i, a] = shift j`.
+*   **Reduce (r_n):** If `[A -> α .]` is in state `i`, then for all symbols `a` in `FOLLOW(A)`, `ACTION[i, a] = reduce by rule n`.
+*   **Accept (acc):** If `[S' -> S .]` is in state `i`, then `ACTION[i, $] = accept`.
 
-### 4.2 Robust Data Handling
-To prevent terminal symbol conflicts (e.g., using `||` or `|` in the grammar), the system uses a **Tab-Separated Value (TSV)** communication protocol between the C++ engine and the JS frontend. This ensures 100% accurate column alignment regardless of the symbols used.
-
-### 4.3 Aligned Derivation Trees
-The tree visualization implements an "Invisible Sink Node" logic. This forces all terminal leaf nodes to align horizontally at the bottom of the graph, making the resulting "Input String" clearly visible in a single line.
-
----
-
-## 5. System Execution Flow
-1.  **Input:** User provides a Context-Free Grammar (CFG) and a test string.
-2.  **Analysis:** The C++ engine augments the grammar and computes FIRST/FOLLOW sets.
-3.  **DFA Construction:** The engine builds a collection of state items using Closure and Goto operations.
-4.  **Parsing:** The engine simulates the stack-based parsing process.
-5.  **Output:** The engine exports the DFA, Tables, and AST to the dashboard for visualization.
+### 3.2 GOTO Table Rules
+For non-terminals `A`, if `goto(i, A) = j`, then `GOTO[i, A] = j`. This table is used specifically after a reduction to decide which state to jump to next.
 
 ---
 
-## 6. Conclusion
-The **LR(1) Parser Engine** successfully demonstrates the integration of classical compiler theory with modern web visualization techniques. It serves as a powerful educational tool, making the complex "black box" of LR parsing transparent and accessible to students and developers alike.
+## 4. Stack-Based Parsing Simulation
+The engine uses a dual-stack approach (modeled as a single interleaved stack in the code) to track the parse state.
+
+### 4.1 Stack Structure
+The stack stores alternating **States** and **Symbols**:
+`[0, Symbol1, State1, Symbol2, State2, ...]`
+
+### 4.2 The Parsing Algorithm (Step-by-Step)
+1.  **Initialize:** Push State 0 onto the stack.
+2.  **Lookup:** Check `ACTION[top_state, next_input_token]`.
+3.  **If Action is SHIFT (s_n):**
+    *   Push the input token onto the stack.
+    *   Push state `n` onto the stack.
+    *   Advance to the next input token.
+4.  **If Action is REDUCE (r_n: A -> β):**
+    *   Determine the length of the RHS (`|β|`).
+    *   Pop `2 * |β|` elements from the stack (this removes the symbols and their associated states).
+    *   Look at the new top state `s'`.
+    *   Push the LHS symbol `A` onto the stack.
+    *   Push the new state `GOTO[s', A]` onto the stack.
+    *   *Note: Input pointer does NOT advance during a reduction.*
+5.  **If Action is ACCEPT:** The string is valid.
+6.  **If Action is ERROR:** The string is invalid.
 
 ---
 
-**Author:** [Your Name]  
-**Subject:** Compiler Design (Sem 4)  
-**Repository:** [https://github.com/palaparthidinesh99-design/LR-1-Parser-Engine](https://github.com/palaparthidinesh99-design/LR-1-Parser-Engine)
+## 5. Conflict Resolution & Precedence
+One of the "pro" features of this implementation is the handling of **Shift-Reduce conflicts**.
+
+### 5.1 Precedence Levels
+When the parser is in a state where it can either Shift a symbol or Reduce a rule, it compares the **Precedence Level** of the incoming terminal with the precedence of the rule currently being reduced.
+*   If `Precedence(Terminal) > Precedence(Rule)`, the parser **Shifts**.
+*   If `Precedence(Terminal) < Precedence(Rule)`, the parser **Reduces**.
+
+### 5.2 Associativity
+If the precedence levels are equal (e.g., `+` and `-`), the engine uses **Associativity**:
+*   **Left-Associative:** Performs a **Reduce** (e.g., `1 + 2 + 3` becomes `(1 + 2) + 3`).
+*   **Right-Associative:** Performs a **Shift** (e.g., `a = b = c` becomes `a = (b = c)`).
+
+---
+
+## 6. Implementation Details (Data Structures)
+*   **Item Sets:** Stored as `std::set<Item>` in C++ to ensure uniqueness and automatic sorting.
+*   **The DFA:** Represented as a `std::vector<std::set<Item>>`, where each index is a State ID.
+*   **Transitions:** Stored in a `std::map<std::pair<int, string>, int>` for O(log n) lookup speeds.
+*   **Visualization:** The parse tree is generated by creating `TreeNode` objects during every **Reduce** operation, linking the children (popped from a node stack) to the new LHS parent.
+
+---
+
+## 7. Conclusion
+This implementation provides a mathematically rigorous and visually intuitive environment for LR(1) parsing. By combining a high-performance C++ engine with a modern web interface, the project demonstrates how complex compiler theory can be made accessible and interactive.
