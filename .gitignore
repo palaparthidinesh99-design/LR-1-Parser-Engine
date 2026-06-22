@@ -13,6 +13,9 @@ venv/
 # Data files (optional, but keep them if you want your grammar shared)
 # data/*.txt
 
+# Docs images (commit screenshots intentionally — keep them tracked)
+!docs/images/*
+
 # IDEs
 .vscode/
 .idea/

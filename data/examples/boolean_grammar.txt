@@ -1,0 +1,22 @@
+TERMINALS
+id and or not ( ) $
+
+NON_TERMINALS
+B
+
+START
+B
+
+PRECEDENCE
+not 3 right
+and 2 left
+or 1 left
+END
+
+RULES
+B -> B and B
+B -> B or B
+B -> not B
+B -> ( B )
+B -> id
+END

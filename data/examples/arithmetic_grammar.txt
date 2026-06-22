@@ -1,0 +1,24 @@
+TERMINALS
+id + - * / ( ) $
+
+NON_TERMINALS
+E 
+
+START
+E
+
+PRECEDENCE
++ 1 left
+- 1 left
+* 2 left
+/ 2 left
+END
+
+RULES
+E -> E + E
+E -> E - E
+E -> E * E
+E -> E / E
+E -> ( E )
+E -> id
+END
