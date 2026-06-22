@@ -2,6 +2,7 @@
 
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
+[![Live Demo](https://img.shields.io/badge/demo-online-brightgreen)](https://lr-1-parser-engine.onrender.com/)
 
 A lightweight LR(1) parser engine with a Flask web UI for visualizing grammar parsing, parsing tables, and parse steps.
 
@@ -84,15 +85,13 @@ Render will build and deploy automatically on push. Alternatively, connect any c
 
 ### Screenshots
 
-Below are example screenshots from the demo. Save your images to `docs/images/` with the names shown and they will render here.
+Below are example screenshots from the demo.
 
 ![Derivation Tree](docs/images/demo-1.png)
 
 ![Action Goto Table](docs/images/demo-2.png)
 
 ![Stack Trace](docs/images/demo-3.png)
-
-If you want, I can add these images to the repo for you — upload them here or tell me to commit and push when you're ready.
 
 ## Running tests
 
