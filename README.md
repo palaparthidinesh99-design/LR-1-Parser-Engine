@@ -1,91 +1,38 @@
 # LR-1-Parser-Engine
 
-![License](https://img.shields.io/badge/license-MIT-blue)
-![Python](https://img.shields.io/badge/python-3.10%2B-blue)
+[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/)
 [![Live Demo](https://img.shields.io/badge/demo-online-brightgreen)](https://lr-1-parser-engine.onrender.com/)
 
-A lightweight LR(1) parser engine with a Flask web UI for visualizing grammar parsing, parsing tables, and parse steps.
+LR-1-Parser-Engine is a lightweight parser engine with a Flask web interface for visualizing LR(1) grammar parsing, parse tables, and derivation output.
+
+## Table of Contents
+
+- [Features](#features)
+- [Demo](#demo)
+- [Quickstart](#quickstart)
+- [Repository Structure](#repository-structure)
+- [Examples](#examples)
+- [Docker & Deployment](#docker--deployment)
+- [Testing](#testing)
+- [Notes](#notes)
+- [License](#license)
 
 ## Features
 
-- Flask-based interactive UI
-- LR(1) parser engine built from C++ sources
-- Visual graph generation for parse behavior
-- Example grammars included under `data/examples/`
-
-## Quickstart
-
-```powershell
-python -m venv .venv
-.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-cd LR-1-Parser-Engine
-.venv\Scripts\python.exe app.py
-```
-
-Open the app in your browser:
-
-```
-http://127.0.0.1:5000
-```
-
-## Example files
-
-- `data/examples/arithmetic_grammar.txt`
-- `data/examples/arithmetic_input.txt`
-- `data/examples/boolean_grammar.txt`
-- `data/examples/boolean_input.txt`
-
-## Project structure
-
-- `app.py` — Flask application entrypoint
-- `src/` — C++ parser source files
-- `data/` — grammar and input files
-- `templates/` — HTML UI templates
-- `tests/` — automated tests
-
-## Notes
-
-- Make sure `g++` is available in PATH so the parser can compile successfully before execution.
-- The Flask app compiles the C++ parser when `/run` is called.
+- Interactive Flask web UI
+- LR(1) parser engine compiled from C++ sources
+- Visual parse tree and parse table output
+- Support for example grammars in `data/examples/`
+- Docker-ready deployment with `Dockerfile` and `render.yaml`
 
 ## Demo
 
-Add screenshots or a short GIF to show the UI. Place images under `docs/images/` and reference them like:
+A live demo is available at:
 
-![Demo screenshot](docs/images/demo-screenshot.png)
-
-Example GIFs/screenshots help visitors quickly understand the app.
-
-## Docker / Deployment
-
-You can run the app in Docker locally using the provided `Dockerfile` and `docker-compose.yml`:
-
-Build and run with Docker:
-
-```bash
-docker build -t lr1-parser-engine .
-docker run -p 5000:5000 lr1-parser-engine
-```
-
-Or using `docker-compose` for live code mounting:
-
-```bash
-docker-compose up --build
-```
-
-Deploy to Render (recommended quick option):
-
-1. Sign in to Render (https://render.com) and create a new Web Service.
-2. Connect your GitHub repository and select the branch.
-3. Choose "Docker" as the environment (it will use the included `Dockerfile`).
-4. Set the port to `5000` if prompted and deploy.
-
-Render will build and deploy automatically on push. Alternatively, connect any container-friendly host (Railway, Fly, Heroku with container registry, etc.).
+[https://lr-1-parser-engine.onrender.com/](https://lr-1-parser-engine.onrender.com/)
 
 ### Screenshots
-
-Below are example screenshots from the demo.
 
 ![Derivation Tree](docs/images/demo-1.png)
 
@@ -93,12 +40,84 @@ Below are example screenshots from the demo.
 
 ![Stack Trace](docs/images/demo-3.png)
 
-## Running tests
+## Quickstart
 
 ```powershell
-cd LR-1-Parser-Engine
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+python app.py
+```
+
+Then open:
+
+```
+http://127.0.0.1:5000
+```
+
+## Repository Structure
+
+- `app.py` — Flask application entrypoint
+- `src/` — C++ parser source code
+- `data/` — grammar/input files and examples
+- `templates/` — HTML UI templates
+- `docs/` — documentation and screenshots
+- `tests/` — automated tests
+- `Dockerfile` — Docker image definition
+- `render.yaml` — Render deployment manifest
+
+## Examples
+
+The repository includes sample grammar files under `data/examples/`:
+
+- `data/examples/arithmetic_grammar.txt`
+- `data/examples/arithmetic_input.txt`
+- `data/examples/boolean_grammar.txt`
+- `data/examples/boolean_input.txt`
+
+## Docker & Deployment
+
+### Local Docker
+
+Build and run the container locally:
+
+```bash
+docker build -t lr1-parser-engine .
+docker run -p 5000:5000 lr1-parser-engine
+```
+
+### Docker Compose
+
+Run with live code mounting:
+
+```bash
+docker-compose up --build
+```
+
+### Render Deployment
+
+A Render manifest is included in `render.yaml`.
+
+To deploy on Render:
+
+1. Sign in to https://render.com.
+2. Create a new Web Service.
+3. Connect the repository `palaparthidinesh99-design/LR-1-Parser-Engine`.
+4. Choose Docker as the environment.
+5. Confirm branch `main` and deploy.
+
+## Testing
+
+Run automated tests locally:
+
+```powershell
 pytest -q
 ```
+
+## Notes
+
+- `g++` must be available in `PATH` so the parser can compile successfully.
+- The Flask app compiles the C++ parser when `/run` is called.
 
 ## License
 
