@@ -85,13 +85,20 @@ This repository is configured for automated builds on **Render** using the provi
 ## 📈 Visual Features
 
 ### 1. Diagnostics & Parser Simulation
-Traces stack, input token shifts, and reduction rules line-by-line using structured tables.
+Traces stack, input token shifts, and reduction rules line-by-line using structured monospace tables.
+![Diagnostics and Simulation](docs/images/demo-3.png)
 
 ### 2. State Automaton Card View
 Displays computed canonical collections of LR items with transitions represented as interactive pills.
+![State Automaton View](docs/images/demo-4.png)
 
-### 3. Live AST / Derivation Trees
+### 3. Interactive Parse Tables
+Displays canonical Action and Goto tables with color-coded syntax actions.
+![Parse Tables](docs/images/demo-2.png)
+
+### 4. Live AST / Derivation Trees
 Converts C++ tree pointers into structural Mermaid diagrams rendered live in-browser.
+![AST Derivation Tree](docs/images/demo-1.png)
 
 ---
 

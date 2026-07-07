@@ -597,13 +597,17 @@
                 
                 lines.forEach(l => {
                     let text = l.trim();
-                    if(text.startsWith('goto')) transitions.push(text);
+                    if(text.startsWith('goto')) {
+                        // Strip 'I' prefix from transitions (e.g., goto(id) -> I1 to goto(id) -> 1)
+                        text = text.replace(/->\s*I(\d+)/g, '-> $1');
+                        transitions.push(text);
+                    }
                     else if(text && text !== '(No transitions)') items.push(text);
                 });
 
                 html += `
                 <div class="state-card">
-                    <div class="state-header">State I${stateNum} <span class="tag">#${stateNum}</span></div>
+                    <div class="state-header">State ${stateNum} <span class="tag">#${stateNum}</span></div>
                     <div class="item-list">
                         ${items.map(item => `<div>${escapeHtml(item)}</div>`).join('')}
                     </div>
