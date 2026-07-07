@@ -1,1 +1,57 @@
-S -> a
+TERMINALS
+id num if while = + - * / < > == ( ) { } ; $
+
+NON_TERMINALS
+Program
+Block
+StmtList
+Stmt
+Condition
+Expr
+Term
+Factor
+
+START
+Program
+
+PRECEDENCE
+== 1 left
+< 1 left
+> 1 left
++ 2 left
+- 2 left
+* 3 left
+/ 3 left
+END
+
+RULES
+
+Program -> Block
+
+Block -> { StmtList }
+
+StmtList -> StmtList Stmt
+StmtList -> Stmt
+
+Stmt -> id = Expr ;
+Stmt -> if ( Condition ) Block
+Stmt -> while ( Condition ) Block
+Stmt -> Block
+
+Condition -> Expr < Expr
+Condition -> Expr > Expr
+Condition -> Expr == Expr
+
+Expr -> Expr + Term
+Expr -> Expr - Term
+Expr -> Term
+
+Term -> Term * Factor
+Term -> Term / Factor
+Term -> Factor
+
+Factor -> ( Expr )
+Factor -> id
+Factor -> num
+
+END
