@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LR(1) Parser Engine</title>
+    <link rel="icon" href="/static/analysis.png" type="image/png">
     <!-- Premium Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -55,6 +56,7 @@
             padding: 20px 40px;
             display: flex;
             align-items: center;
+            justify-content: space-between;
             border-bottom: 1px solid var(--border-light);
             background: rgba(9, 9, 11, 0.8);
             backdrop-filter: blur(12px);
@@ -78,11 +80,11 @@
         h1::before {
             content: '';
             display: inline-block;
-            width: 24px;
-            height: 24px;
-            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            width: 28px;
+            height: 28px;
+            background: url('/static/analysis.png') no-repeat center center;
+            background-size: contain;
             border-radius: 6px;
-            box-shadow: 0 0 15px var(--accent-glow);
         }
 
         /* --- MAIN LAYOUT --- */
@@ -447,12 +449,29 @@
             font-family: var(--font-sans);
             opacity: 0.5;
         }
+
+        footer {
+            display: none;
+        }
+        .attribution a {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s ease;
+            font-family: var(--font-sans);
+        }
+        .attribution a:hover {
+            color: var(--accent-primary);
+        }
     </style>
 </head>
 <body>
 
     <header>
         <h1>Parser Engine</h1>
+        <div class="attribution">
+            <a href="https://www.flaticon.com/free-icons/syntax" title="syntax icons" target="_blank" rel="noopener noreferrer">Syntax icon by Uniconlabs</a>
+        </div>
     </header>
 
     <div class="container">
