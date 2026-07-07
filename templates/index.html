@@ -4,144 +4,234 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LR(1) Parser Engine</title>
+    <!-- Premium Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #0f172a;
-            --panel-bg: rgba(30, 41, 59, 0.7);
-            --border-color: rgba(255, 255, 255, 0.1);
-            --text-color: #f8fafc;
-            --accent: #3b82f6;
-            --accent-hover: #60a5fa;
-            --font-mono: 'Consolas', 'Courier New', monospace;
+            --bg-base: #09090b;
+            --bg-surface: rgba(24, 24, 27, 0.6);
+            --bg-surface-hover: rgba(39, 39, 42, 0.8);
+            --border-light: rgba(255, 255, 255, 0.08);
+            --text-main: #f4f4f5;
+            --text-muted: #a1a1aa;
+            --accent-primary: #3b82f6;
+            --accent-glow: rgba(59, 130, 246, 0.5);
+            --accent-secondary: #8b5cf6;
+            --font-sans: 'Outfit', system-ui, sans-serif;
+            --font-mono: 'Fira Code', monospace;
         }
 
+        * { box-sizing: border-box; }
+
         body {
-            background: linear-gradient(135deg, #020617, #0f172a);
-            color: var(--text-color);
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-base);
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.08) 0%, transparent 50%);
+            color: var(--text-main);
+            font-family: var(--font-sans);
             margin: 0;
-            padding: 10px 20px;
+            padding: 0;
             height: 100vh;
             display: flex;
             flex-direction: column;
-            box-sizing: border-box;
             overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* --- CUSTOM SCROLLBARS --- */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { 
+            background: rgba(255, 255, 255, 0.1); 
+            border-radius: 4px; 
+        }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+
+        /* --- HEADER --- */
+        header {
+            padding: 20px 40px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--border-light);
+            background: rgba(9, 9, 11, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            z-index: 10;
         }
 
         h1 {
-            text-align: center;
+            margin: 0;
+            font-size: 1.5rem;
             font-weight: 800;
-            background: linear-gradient(to right, #60a5fa, #a855f7);
+            background: linear-gradient(135deg, #fff, #a1a1aa);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            margin: 0 0 10px 0;
-            font-size: 1.8rem;
             letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
+        h1::before {
+            content: '';
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 6px;
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        /* --- MAIN LAYOUT --- */
         .container {
             display: flex;
-            gap: 20px;
             flex: 1;
-            min-height: 0;
+            padding: 20px;
+            gap: 20px;
+            min-height: 0; /* Important for flex child scrolling */
         }
 
+        /* --- PANELS --- */
         .panel {
-            background: var(--panel-bg);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 20px;
+            background: var(--bg-surface);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-light);
+            border-radius: 16px;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
         }
 
         .left-panel {
-            flex: 0 0 320px;
+            flex: 0 0 350px;
+            padding: 24px;
         }
 
         .right-panel {
             flex: 1;
-            overflow-x: hidden; /* Lock horizontal width */
-            overflow-y: hidden;
-            min-width: 0; /* Allow flex shrinking */
+            padding: 24px 24px 0 24px;
+        }
+
+        /* --- FORM ELEMENTS --- */
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 20px;
+            flex: 1;
+        }
+
+        .input-group label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         textarea {
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid var(--border-color);
-            color: #e2e8f0;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            color: #d4d4d8;
             font-family: var(--font-mono);
-            padding: 15px;
-            border-radius: 8px;
+            font-size: 13px;
+            line-height: 1.6;
+            padding: 16px;
+            border-radius: 12px;
             flex: 1;
             resize: none;
             outline: none;
-            transition: border-color 0.3s;
-            font-size: 13px;
-            line-height: 1.5;
+            transition: all 0.3s ease;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
         }
 
         textarea:focus {
-            border-color: var(--accent);
+            border-color: var(--accent-primary);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2), 0 0 0 1px var(--accent-primary);
+            background: rgba(0, 0, 0, 0.5);
         }
 
         button {
-            background: var(--accent);
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
             color: white;
             border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-size: 15px;
+            padding: 14px 24px;
+            border-radius: 12px;
+            font-family: var(--font-sans);
+            font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
-            margin-top: 15px;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        button::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(to right, transparent, rgba(255,255,255,0.2), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.5s ease;
         }
 
         button:hover {
-            background: var(--accent-hover);
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
         }
 
+        button:hover::after {
+            transform: translateX(100%);
+        }
+
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+        }
+
+        /* --- TABS --- */
         .tabs {
             display: flex;
-            gap: 5px;
-            margin-bottom: 15px;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 5px;
+            gap: 8px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-light);
+            padding-bottom: 12px;
             overflow-x: auto;
-            flex-wrap: nowrap;
         }
 
-        .tabs::-webkit-scrollbar { height: 4px; }
-
         .tab {
-            padding: 8px 12px;
+            padding: 8px 16px;
             cursor: pointer;
-            border-radius: 6px;
-            transition: all 0.2s;
+            border-radius: 8px;
+            transition: all 0.2s ease;
             font-weight: 500;
-            color: #94a3b8;
-            font-size: 12px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
             white-space: nowrap;
+            background: transparent;
+            border: 1px solid transparent;
         }
 
         .tab:hover {
-            background: rgba(255, 255, 255, 0.05);
-            color: white;
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.03);
         }
 
         .tab.active {
-            background: rgba(59, 130, 246, 0.2);
-            color: var(--accent-hover);
-            border: 1px solid rgba(59, 130, 246, 0.3);
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-main);
+            border-color: var(--border-light);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
 
         .tab-content {
@@ -152,235 +242,263 @@
             font-size: 13px;
             white-space: pre-wrap;
             line-height: 1.6;
-            color: #cbd5e1;
-            padding-right: 10px;
+            color: #d4d4d8;
+            padding-bottom: 24px;
         }
 
         .tab-content.active {
             display: block;
-            animation: fadeIn 0.3s ease forwards;
+            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- TABLES --- */
         .table-container {
             width: 100%;
-            height: calc(100vh - 280px); /* Fill the remaining space */
-            overflow: auto; /* Handle both X and Y scrolling properly */
-            margin-top: 10px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            background: rgba(15, 23, 42, 0.3);
-        }
-
-        th, td {
-            padding: 12px 20px;
-            text-align: center;
-            border-bottom: 1px solid var(--border-color);
-            border-right: 1px solid var(--border-color);
-            word-break: break-word; /* Allow breaking of long words */
-            white-space: pre-wrap;  /* Allow natural wrapping with preserved whitespace */
-            max-width: 400px;       /* Limit width to trigger the wrap */
-        }
-
-        /* Center the table without clipping the left column */
-        .table-container {
-            width: 100%;
-            overflow-x: auto;
+            border-radius: 12px;
+            border: 1px solid var(--border-light);
+            background: rgba(0, 0, 0, 0.2);
+            overflow: auto;
         }
 
         table {
-            width: auto;
+            width: max-content;
             min-width: 100%;
             border-collapse: separate;
             border-spacing: 0;
-            background: rgba(15, 23, 42, 0.3);
-            margin: 0 auto; /* This centers the table safely */
-            table-layout: auto;
         }
 
-        /* Sticky functionality for fixed navigation */
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-light);
+            border-right: 1px solid var(--border-light);
+        }
+
         th {
-            background: #1e293b !important;
-            color: #fff;
+            background: rgba(24, 24, 27, 0.95) !important;
+            backdrop-filter: blur(8px);
+            color: var(--text-muted);
+            font-family: var(--font-sans);
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
             position: sticky;
             top: 0;
             z-index: 20;
-            font-size: 11px;
-            border-bottom: 2px solid var(--accent) !important;
+            border-bottom: 1px solid rgba(255,255,255,0.1) !important;
         }
 
-        /* Sticky State/Stack column (First column) */
         td:first-child, th:first-child {
             position: sticky;
             left: 0;
-            background: #1e293b !important;
+            background: rgba(24, 24, 27, 0.95) !important;
             z-index: 25;
-            font-weight: 700;
-            border-right: 2px solid var(--accent) !important;
+            border-right: 1px solid rgba(255,255,255,0.1) !important;
         }
 
-        /* Top-Left Corner Piece (Highest priority) */
-        th:first-child {
-            z-index: 30;
+        th:first-child { z-index: 30; }
+
+        /* Row hover effect */
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
         }
 
-        /* Specific override for Action/Goto behavior */
+        .act-shift { color: #38bdf8; }
+        .act-reduce { color: #c084fc; }
+        .act-acc { color: #34d399; }
+        .divider-col { border-right: 2px solid rgba(255,255,255,0.1) !important; }
+
+        /* --- TABLE CONFIG OVERRIDES --- */
         #tab-tables td, #tab-tables th {
             white-space: nowrap !important;
             max-width: none !important;
         }
 
-        /* Simulation trace formatting */
-        #tab-sim td, #tab-sim th {
-            max-width: none;
-            overflow: visible;
+        #tab-sim td:first-child, #tab-sim th:first-child {
+            position: static !important;
+            background: transparent !important;
+            z-index: auto;
+            border-right: 1px solid var(--border-light) !important;
         }
+
+        #tab-sim table {
+            width: 100% !important;
+            max-width: 100% !important;
+            table-layout: fixed;
+        }
+
+        #tab-sim th, #tab-sim td {
+            white-space: pre-wrap !important;
+            word-break: break-word !important;
+            padding: 12px 16px;
+        }
+
+        #tab-sim th:nth-child(1), #tab-sim td:nth-child(1) { width: 45%; text-align: left; }
+        #tab-sim th:nth-child(2), #tab-sim td:nth-child(2) { width: 35%; text-align: left; }
+        #tab-sim th:nth-child(3), #tab-sim td:nth-child(3) { width: 20%; text-align: center; }
 
         /* --- DFA STATE CARDS --- */
         .state-cards-container {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 15px;
-            padding: 10px 0;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
         }
 
         .state-card {
-            background: rgba(30, 41, 59, 0.5);
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            padding: 20px;
             display: flex;
             flex-direction: column;
-            transition: transform 0.2s, background 0.2s;
+            transition: all 0.3s ease;
         }
 
         .state-card:hover {
-            background: rgba(30, 41, 59, 0.8);
-            transform: translateY(-3px);
+            border-color: rgba(255,255,255,0.2);
+            background: rgba(0, 0, 0, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
         }
 
         .state-header {
-            color: var(--accent-hover);
-            font-weight: bold;
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            font-weight: 600;
             font-size: 1.1rem;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
         .item-list {
-            font-size: 12px;
-            line-height: 1.6;
-            margin-bottom: 15px;
+            margin-bottom: 16px;
+            color: #a1a1aa;
         }
 
+        .item-list div { margin-bottom: 4px; }
+
         .transition-list {
-            border-top: 1px solid var(--border-color);
-            padding-top: 10px;
+            border-top: 1px solid var(--border-light);
+            padding-top: 12px;
             display: flex;
             flex-wrap: wrap;
-            gap: 5px;
+            gap: 6px;
+            margin-top: auto;
         }
 
         .tag {
-            background: rgba(59, 130, 246, 0.15);
-            color: #93c5fd;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            border: 1px solid rgba(59, 130, 246, 0.3);
+            background: rgba(255, 255, 255, 0.05);
+            color: #e4e4e7;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            border: 1px solid var(--border-light);
         }
 
         /* --- CODE VIEW --- */
         .code-view {
-            background: #020617;
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            color: #94a3b8;
-            font-size: 12px;
-            margin-top: 10px;
-            height: 100%;
-            box-sizing: border-box;
-            overflow: auto;
+            background: #000;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-light);
+            color: #d4d4d8;
         }
 
         .conflict-text {
             color: #fb923c;
             border-left: 3px solid #fb923c;
-            padding: 10px;
-            margin: 10px 0;
+            padding: 12px 16px;
+            margin: 16px 0;
             background: rgba(251, 146, 60, 0.1);
-            border-radius: 0 4px 4px 0;
-        }
-
-        .act-shift { color: #60a5fa; font-weight: bold; }
-        .act-reduce { color: #a855f7; font-weight: bold; }
-        .act-acc { color: #34d399; font-weight: bold; }
-
-        .divider-col {
-            background: rgba(255, 255, 255, 0.05);
-            border-right: 2px solid var(--accent) !important;
-            min-width: 20px;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(5px); }
-            to { opacity: 1; transform: translateY(0); }
+            border-radius: 0 8px 8px 0;
+            font-family: var(--font-sans);
         }
 
         .loading {
             display: none;
             text-align: center;
-            color: var(--accent);
-            font-weight: bold;
-            margin-top: 10px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-top: 12px;
+            font-family: var(--font-sans);
             animation: pulse 1.5s infinite;
         }
-
         @keyframes pulse {
-            0% { opacity: 0.5; }
+            0%, 100% { opacity: 0.5; }
             50% { opacity: 1; }
-            100% { opacity: 0.5; }
+        }
+        
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-muted);
+            font-family: var(--font-sans);
+            opacity: 0.5;
         }
     </style>
 </head>
 <body>
 
-    <h1> LR(1) Grammar Engine</h1>
+    <header>
+        <h1>Parser Engine</h1>
+    </header>
 
     <div class="container">
+        <!-- LEFT PANEL -->
         <div class="panel left-panel">
-            <h3 style="margin-top:0; font-size:16px;">Grammar Config</h3>
-            <textarea id="grammarInput" spellcheck="false">{{ grammar }}</textarea>
+            <div class="input-group" style="flex: 2;">
+                <label>Grammar Configuration</label>
+                <textarea id="grammarInput" spellcheck="false">{{ grammar }}</textarea>
+            </div>
             
-            <h3 style="margin-top:20px; font-size:16px;">Test Parse String</h3>
-            <textarea id="parseInput" style="height: 100px; min-height: 100px;">{{ initial_input }}</textarea>
+            <div class="input-group" style="flex: 1;">
+                <label>Test Parse String</label>
+                <textarea id="parseInput" spellcheck="false">{{ initial_input }}</textarea>
+            </div>
 
-            <button id="runBtn" onclick="runParser()">Parse</button>
+            <button id="runBtn" onclick="runParser()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                Compile & Parse
+            </button>
             <div id="loading" class="loading">Processing Pipeline...</div>
         </div>
 
+        <!-- RIGHT PANEL -->
         <div class="panel right-panel">
             <div class="tabs">
-                <div class="tab active" onclick="switchTab('tab-summary')">Summary & Sets</div>
-                <div class="tab" onclick="switchTab('tab-input-grammar')">Input Grammar</div>
-                <div class="tab" onclick="switchTab('tab-input-test')">Test Input</div>
+                <div class="tab active" onclick="switchTab('tab-summary')">Diagnostics</div>
+                <div class="tab" onclick="switchTab('tab-dfa')">Automaton</div>
+                <div class="tab" onclick="switchTab('tab-tables')">Parse Tables</div>
+                <div class="tab" onclick="switchTab('tab-sim')">Simulation</div>
+                <div class="tab" onclick="switchTab('tab-tree')">AST / Derivation</div>
+                <div class="tab" onclick="switchTab('tab-input-grammar')">Source</div>
                 <div class="tab" onclick="switchTab('tab-rules')">Rules</div>
-                <div class="tab" onclick="switchTab('tab-dfa')">Items and Transitions</div>
-                <div class="tab" onclick="switchTab('tab-tables')">Action/Goto</div>
-                <div class="tab" onclick="switchTab('tab-sim')">Stack Trace</div>
-                <div class="tab" onclick="switchTab('tab-tree')">Derivation Tree</div>
             </div>
 
-            <div id="tab-summary" class="tab-content active">Pending execution...</div>
+            <div id="tab-summary" class="tab-content active">
+                <div class="empty-state">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:16px"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+                    <div>Enter a grammar and hit Parse to view diagnostics.</div>
+                </div>
+            </div>
             <div id="tab-input-grammar" class="tab-content"><div class="code-view" id="view-grammar"></div></div>
-            <div id="tab-input-test" class="tab-content"><div class="code-view" id="view-input"></div></div>
-            <div id="tab-rules" class="tab-content">Pending execution...</div>
-            <div id="tab-dfa" class="tab-content">Pending execution...</div>
-            <div id="tab-tables" class="tab-content">Pending execution...</div>
-            <div id="tab-sim" class="tab-content">Pending execution...</div>
-            <div id="tab-tree" class="tab-content" style="text-align: center; overflow: auto;">Pending execution...</div>
+            <div id="tab-rules" class="tab-content">Pending...</div>
+            <div id="tab-dfa" class="tab-content">Pending...</div>
+            <div id="tab-tables" class="tab-content">Pending...</div>
+            <div id="tab-sim" class="tab-content">Pending...</div>
+            <div id="tab-tree" class="tab-content" style="text-align: center; overflow: auto;">Pending...</div>
         </div>
     </div>
 
@@ -396,8 +514,8 @@
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             
-            if (event && event.target) {
-                event.target.classList.add('active');
+            if (event && event.currentTarget) {
+                event.currentTarget.classList.add('active');
             } else {
                 let targetTab = document.querySelector(`[onclick="switchTab('${tabId}')"]`);
                 if(targetTab) targetTab.classList.add('active');
@@ -406,7 +524,6 @@
             const targetEl = document.getElementById(tabId);
             targetEl.classList.add('active');
 
-            // Trigger Mermaid render if switching to tree tab
             if (tabId === 'tab-tree' && window.lastTreeCode) {
                 const treeDiv = document.getElementById('tab-tree');
                 treeDiv.innerHTML = `<pre class="mermaid">${window.lastTreeCode}</pre>`;
@@ -429,13 +546,11 @@
             lines.forEach((line, index) => {
                 if (line.includes('----')) return;
                 
-                // Use ||| as a special divider for Action/Goto
                 let segments = line.split('|||');
                 let leftCols = segments[0].split('\t');
                 
                 html += '<tr>';
                 
-                // Left Segment (State + Action)
                 leftCols.forEach((col, cIdx) => {
                     let text = col.trim();
                     let escapedText = escapeHtml(text);
@@ -454,18 +569,11 @@
                     }
                 });
                 
-                // Right Segment (Goto)
-                // We slice(1) because the C++ output starts with a leading \t in the GOTO section
                 let rightCols = segments.length > 1 ? segments[1].split('\t').slice(1) : [];
-                
                 rightCols.forEach(col => {
                     let text = col.trim();
-                    let escapedText = escapeHtml(text);
-                    if (index === 0) {
-                        html += `<th>${escapedText}</th>`;
-                    } else {
-                        html += `<td>${escapedText}</td>`;
-                    }
+                    if (index === 0) html += `<th>${escapeHtml(text)}</th>`;
+                    else html += `<td>${escapeHtml(text)}</td>`;
                 });
                 
                 html += '</tr>';
@@ -502,7 +610,7 @@
                     <div class="transition-list">
                         ${transitions.length > 0 ? 
                             transitions.map(tr => `<span class="tag">${escapeHtml(tr)}</span>`).join('') : 
-                            '<span style="color: #64748b; font-size: 11px;">(Terminal State)</span>'}
+                            '<span style="color: #64748b; font-size: 11px;">(Terminal)</span>'}
                     </div>
                 </div>`;
             }
@@ -520,9 +628,7 @@
             const grammarText = document.getElementById('grammarInput').value;
             const parseString = document.getElementById('parseInput').value;
 
-            // Update Snapshots
-            document.getElementById('view-grammar').innerText = grammarText;
-            document.getElementById('view-input').innerText = parseString;
+            document.getElementById('view-grammar').innerText = grammarText + '\n\n-- Test String --\n' + parseString;
 
             try {
                 const response = await fetch('/run', {
@@ -534,15 +640,14 @@
                 const data = await response.json();
 
                 if (data.error) {
-                    document.getElementById('tab-summary').innerText = data.error;
-                    // Switch to summary tab automatically on error
+                    document.getElementById('tab-summary').innerHTML = `<div class="conflict-text" style="color:#ef4444; border-color:#ef4444; background: rgba(239, 68, 68, 0.1)">${escapeHtml(data.error)}</div>`;
                     switchTab('tab-summary');
                 } else {
                     let summaryHtml = data.sections['summary'] || '';
                     summaryHtml = summaryHtml.replace(/(Conflict.*?precedence!)/g, '<div class="conflict-text">$1</div>');
                     
-                    document.getElementById('tab-summary').innerHTML = '<h3>Sets & Diagnostics</h3>' + summaryHtml;
-                    document.getElementById('tab-rules').innerHTML = '<h3>Numbered Rules</h3>' + data.sections['NUMBERED PRODUCTION RULES'].split('\n').map(r => `<div>${escapeHtml(r)}</div>`).join('');
+                    document.getElementById('tab-summary').innerHTML = '<h3 style="font-family:var(--font-sans); margin-top:0;">Sets & Diagnostics</h3>' + summaryHtml;
+                    document.getElementById('tab-rules').innerHTML = '<h3 style="font-family:var(--font-sans); margin-top:0;">Numbered Rules</h3>' + data.sections['NUMBERED PRODUCTION RULES'].split('\n').map(r => `<div>${escapeHtml(r)}</div>`).join('');
                     
                     document.getElementById('tab-dfa').innerHTML = formatDFA(data.sections['DFA ITEMS AND TRANSITIONS']);
                     document.getElementById('tab-tables').innerHTML = formatTable(data.sections['ACTION AND GOTO TABLES'], true);
@@ -553,7 +658,6 @@
                         let treeDiv = document.getElementById('tab-tree');
                         treeDiv.innerHTML = `<pre class="mermaid">${window.lastTreeCode}</pre>`;
                         
-                        // If we are ALREADY on the tree tab, run mermaid now
                         if (document.getElementById('tab-tree').classList.contains('active')) {
                             if (window.mermaid) {
                                 await window.mermaid.run({ nodes: treeDiv.querySelectorAll('.mermaid') });
@@ -565,13 +669,12 @@
                     }
                 }
             } catch(e) {
-                document.getElementById('tab-summary').innerText = 'Server error: ' + e.message;
+                document.getElementById('tab-summary').innerHTML = `<div class="conflict-text" style="color:#ef4444; border-color:#ef4444; background: rgba(239, 68, 68, 0.1)">Server Error: ${e.message}</div>`;
             } finally {
-                btn.style.display = 'block';
+                btn.style.display = 'flex';
                 loading.style.display = 'none';
             }
         }
     </script>
-
 </body>
 </html>
