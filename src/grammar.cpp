@@ -11,11 +11,15 @@ bool GrammarManager::load_from_file(const string& filepath) {
         cerr << "Error: Cannot open " << filepath << endl;
         return false;
     }
+    return load_from_stream(infile);
+}
 
+bool GrammarManager::load_from_stream(istream& in) {
     string line;
     int section = 0; // 1: Terminals, 2: NonTerminals, 3: Start, 4: Precedence, 5: Rules
 
-    while (getline(infile, line)) {
+    while (getline(in, line)) {
+        if (line == "===INPUT_START===") break;
         if (line.empty() || line[0] == '#') continue;
         
         if (line == "TERMINALS") { section = 1; continue; }

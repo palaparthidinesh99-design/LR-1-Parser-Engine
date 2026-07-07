@@ -531,14 +531,7 @@
                     body: JSON.stringify({ grammar: grammarText, input_string: parseString })
                 });
 
-                const rawText = await response.text();
-                let data = {};
-
-                try {
-                    data = rawText ? JSON.parse(rawText) : {};
-                } catch (e) {
-                    data = { error: 'Server returned an unexpected response.\n' + rawText };
-                }
+                const data = await response.json();
 
                 if (data.error) {
                     document.getElementById('tab-summary').innerText = data.error;

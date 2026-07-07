@@ -16,24 +16,27 @@ int get_rule_id(const GrammarManager* gm, const Item& rule) {
 
 set<Item> Parser::closure(set<Item> I) {
     set<Item> C = I;
-    bool changed = true;
-    while (changed) {
-        changed = false;
-        set<Item> temp_C = C;
-        for (const auto& item : C) {
-            if (item.dot < item.rhs.size()) {
-                string B = item.rhs[item.dot];
-                if (gm->non_terminals.count(B)) {
-                    for (const auto& prod : gm->grammar[B]) {
-                        Item new_item = {B, prod, 0};
-                        if (temp_C.insert(new_item).second) {
-                            changed = true;
-                        }
+    queue<Item> q;
+    for (const auto& item : I) {
+        q.push(item);
+    }
+    
+    while (!q.empty()) {
+        Item item = q.front();
+        q.pop();
+        
+        if (item.dot < item.rhs.size()) {
+            string B = item.rhs[item.dot];
+            if (gm->non_terminals.count(B)) {
+                for (const auto& prod : gm->grammar[B]) {
+                    Item new_item = {B, prod, 0};
+                    if (C.find(new_item) == C.end()) {
+                        C.insert(new_item);
+                        q.push(new_item);
                     }
                 }
             }
         }
-        C = temp_C;
     }
     return C;
 }

@@ -10,9 +10,9 @@ using namespace std;
 int main() {
     GrammarManager gm;
     
-    // Load grammar from file
-    if (!gm.load_from_file("data/grammar.txt")) {
-        cout << "Failed to load grammar.txt" << endl;
+    // Load grammar from standard input
+    if (!gm.load_from_stream(cin)) {
+        cout << "Failed to load grammar" << endl;
         return 1;
     }
     
@@ -42,14 +42,11 @@ int main() {
 
     parser.print_automaton_and_tables();
 
-    // Read input string from data/input.txt
+    // Read input tokens from remaining cin
     vector<string> input_tokens;
-    ifstream infile("data/input.txt");
-    if (infile.is_open()) {
-        string t;
-        while (infile >> t) {
-            input_tokens.push_back(t);
-        }
+    string t;
+    while (cin >> t) {
+        input_tokens.push_back(t);
     }
     
     // Default fallback if empty

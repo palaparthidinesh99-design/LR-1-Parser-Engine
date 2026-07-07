@@ -116,8 +116,9 @@ pytest -q
 
 ## Notes
 
-- `g++` must be available in `PATH` so the parser can compile successfully.
-- The Flask app compiles the C++ parser when `/run` is called.
+- `g++` must be available in `PATH` if running locally, so the parser can compile successfully.
+- The C++ parser is pre-compiled once during the Docker build process for maximum performance.
+- The Flask app efficiently streams data directly to the C++ parser via `stdin`, avoiding slow disk I/O.
 
 ## License
 

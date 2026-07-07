@@ -22,7 +22,10 @@ public:
     
     map<string, Precedence> precedence_rules;
 
+    GrammarManager() {}
+
     bool load_from_file(const string& filepath);
+    bool load_from_stream(istream& in);
     void compute_first();
     void compute_follow();
     

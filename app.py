@@ -22,26 +22,16 @@ def index():
 @app.route('/run', methods=['POST'])
 def run_parser():
     try:
-        data = request.json
+        data = request.json or {}
         grammar_text = data.get('grammar', '')
         input_text = data.get('input_string', 'id + id * id $')
         
-        # Save the grammar and input to file
-        os.makedirs('data', exist_ok=True)
-        with open('data/grammar.txt', 'w') as f:
-            f.write(grammar_text)
-        with open('data/input.txt', 'w') as f:
-            f.write(input_text)
+        # Format payload to send to parser
+        payload = grammar_text + "\n===INPUT_START===\n" + input_text
             
-        # Rebuild and run the parser to ensure it's up to date
-        compile_cmd = ['g++', '-std=c++11', 'src/main.cpp', 'src/grammar.cpp', 'src/parser.cpp', '-o', 'parser.exe']
-        compile_proc = subprocess.run(compile_cmd, capture_output=True, text=True)
-        if compile_proc.returncode != 0:
-            return jsonify({'error': 'Compilation failed:\n' + compile_proc.stderr})
-            
-        # Run the executable
+        # Run the executable, passing payload via stdin
         executable = './parser.exe' if os.name != 'nt' else 'parser.exe'
-        proc = subprocess.run([executable], capture_output=True, text=True)
+        proc = subprocess.run([executable], input=payload, capture_output=True, text=True)
         if proc.returncode != 0:
             return jsonify({'error': 'Execution failed:\n' + proc.stderr})
             
